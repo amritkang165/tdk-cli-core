@@ -47,6 +47,7 @@ const RESOURCE_CONFIG_FIELDS = [
   "backendName",
   "apiPath",
   "healthCheckPath",
+  "smoke",
   "traefik",
   "sablier",
   "dockerfile",
@@ -69,9 +70,16 @@ describe("service-schema.json stays independent of the provider registries", () 
     expect(schema.properties.appType.enum).toEqual(RESOURCE_CONFIG_APP_TYPES);
     expect(schema.properties.type.enum).toEqual(RESOURCE_CONFIG_APP_TYPES);
     expect(schema.properties.featuresEnabled.items.enum).toEqual(supportedManifestFeatures);
-    for (const name of Object.keys(schema.properties)) {
-      expect(schema.properties[name].description, `${name} description`).toBeTruthy();
-    }
+    const checkPropertyDescriptions = (objectSchema: { properties?: Record<string, unknown> }) => {
+      for (const [name, property] of Object.entries(objectSchema.properties ?? {})) {
+        expect(
+          (property as { description?: string }).description,
+          `${name} description`,
+        ).toBeTruthy();
+        checkPropertyDescriptions(property as { properties?: Record<string, unknown> });
+      }
+    };
+    checkPropertyDescriptions(schema);
   });
 
   it("validates all service manifests created by the resource generators", () => {
@@ -125,6 +133,19 @@ describe("service-schema.json stays independent of the provider registries", () 
   it("accepts the NATS feature used by existing service manifests", () => {
     expect(
       validateService({ appName: "orders-api", appType: "backend", featuresEnabled: ["nats"] }),
+    ).toBe(true);
+  });
+
+  it("validates supported post-start smoke checks", () => {
+    expect(
+      validateService({
+        appName: "orders-api",
+        appType: "backend",
+        smoke: {
+          via: "proxy",
+          steps: [{ name: "health", path: "/health", expect: 200 }],
+        },
+      }),
     ).toBe(true);
   });
 
