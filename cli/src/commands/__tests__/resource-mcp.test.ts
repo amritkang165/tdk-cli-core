@@ -49,7 +49,7 @@ describe("the mcp resource type", () => {
 
   it("is accepted by the service schema, and the engine runs it as a backend", () => {
     const schema = JSON.parse(
-      readFileSync(join(repoRoot, "schemas", "service.schema.json"), "utf-8"),
+      readFileSync(join(repoRoot, "engine", "schemas", "service-schema.json"), "utf-8"),
     );
     expect(schema.properties.appType.enum).toContain("mcp");
 

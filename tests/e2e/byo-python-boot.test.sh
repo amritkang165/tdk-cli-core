@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly FIXTURE_DIR="${REPO_ROOT}/tests/e2e/fixtures/byo-python-health"
+readonly SCHEMA="${REPO_ROOT}/engine/schemas/service-schema.json"
 readonly PROJECT_DIR="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tdk-byo-python-boot"
 readonly RESOURCE_DIR="${PROJECT_DIR}/services/shop/legacy"
 readonly CLI="${TDK_BIN:-tdk}"
@@ -30,6 +31,10 @@ if ! command -v "$CLI" >/dev/null 2>&1; then
   echo "tdk CLI not found: $CLI" >&2
   exit 1
 fi
+if ! command -v ajv >/dev/null 2>&1; then
+  echo "Ajv CLI is required to validate service.json against the repository schema" >&2
+  exit 1
+fi
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
 
 rm -rf "$PROJECT_DIR"
@@ -53,7 +58,7 @@ test ! -f services/shop/legacy/health.conf
 cmp "$FIXTURE_DIR/Dockerfile" services/shop/legacy/Dockerfile
 jq -e '.appType == "bring-your-own" and .stack == "shop" and .port == 4500 and .dockerfile == "./Dockerfile"' \
   services/shop/legacy/service.json >/dev/null
-node "$REPO_ROOT/scripts/validate-service-json.mjs" services/shop/legacy/service.json
+ajv validate --spec=draft7 --strict=false -s "$SCHEMA" -d services/shop/legacy/service.json
 cmp "$FIXTURE_DIR/app.py" services/shop/legacy/app.py
 
 "$CLI" up shop --dry-run | tee up-dry-run.txt

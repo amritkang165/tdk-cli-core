@@ -35,7 +35,7 @@
           - "cli/src/commands/__tests__/frontend-vite-generator.test.ts"
           - "engine/topologies/tilt/generators/vite/**"
           - "engine/topologies/tilt/generators/typescript/frontend_tsconfig.star"
-          - "schemas/service.schema.json"
+          - "engine/schemas/service-schema.json"
           - "docs/frontend-framework-providers.md"
 
 "area: infrastructure":

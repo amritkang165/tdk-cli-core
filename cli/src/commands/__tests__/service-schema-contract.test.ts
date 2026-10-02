@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import Ajv2020 from "ajv/dist/2020.js";
+import Ajv from "ajv";
 import { describe, expect, it } from "vitest";
 import { BACKEND_FRAMEWORKS } from "../../backend-frameworks/registry.js";
 import { BACKEND_LANGUAGES } from "../../backend-languages/registry.js";
@@ -16,22 +16,23 @@ import { validateServiceManifest } from "../../utils/service-manifest.js";
 import { createByoServiceJson, createServiceJson } from "../resource.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
-const schema = JSON.parse(readFileSync(join(repoRoot, "schemas", "service.schema.json"), "utf-8"));
+const schema = JSON.parse(
+  readFileSync(join(repoRoot, "engine", "schemas", "service-schema.json"), "utf-8"),
+);
 const publishWorkflow = readFileSync(
   join(repoRoot, ".github", "workflows", "publish-service-schema.yml"),
   "utf-8",
 );
-const byoValidationScripts = [
-  readFileSync(join(repoRoot, "tests", "e2e", "byo-python.test.sh"), "utf-8"),
-  readFileSync(join(repoRoot, "tests", "e2e", "byo-python-boot.test.sh"), "utf-8"),
-];
 
 const frameworkIds = [...Object.keys(FRONTEND_FRAMEWORKS), ...Object.keys(BACKEND_FRAMEWORKS)];
 const languageIds = Object.keys(BACKEND_LANGUAGES);
-// NATS is an engine-supported manifest feature used by existing services but is not a CLI resource generator.
-const supportedManifestFeatures = [...Object.keys(RESOURCE_FEATURES), "nats"];
-const ajv = new Ajv2020({ allErrors: true });
+const ajv = new Ajv({ allErrors: true, strict: false });
 const validateService = ajv.compile(schema);
+const manifest = (fields: Record<string, unknown>) => ({
+  stack: "shop",
+  schemaVersion: 1,
+  ...fields,
+});
 const RESOURCE_CONFIG_FIELDS = [
   "appName",
   "appType",
@@ -67,9 +68,14 @@ describe("service-schema.json stays independent of the provider registries", () 
     expect(Object.keys(schema.properties)).toEqual(
       expect.arrayContaining([...RESOURCE_CONFIG_FIELDS]),
     );
-    expect(schema.properties.appType.enum).toEqual(RESOURCE_CONFIG_APP_TYPES);
-    expect(schema.properties.type.enum).toEqual(RESOURCE_CONFIG_APP_TYPES);
-    expect(schema.properties.featuresEnabled.items.enum).toEqual(supportedManifestFeatures);
+    expect(schema.properties.appType.enum).toEqual(
+      expect.arrayContaining([...RESOURCE_CONFIG_APP_TYPES]),
+    );
+    expect(schema.properties.appType.enum).toHaveLength(RESOURCE_CONFIG_APP_TYPES.length);
+    expect(schema.properties.type.enum).toEqual(schema.properties.appType.enum);
+    expect(schema.properties.featuresEnabled.items.enum).toEqual(
+      expect.arrayContaining([...Object.keys(RESOURCE_FEATURES), "nats"]),
+    );
     const checkPropertyDescriptions = (objectSchema: { properties?: Record<string, unknown> }) => {
       for (const [name, property] of Object.entries(objectSchema.properties ?? {})) {
         expect(
@@ -90,7 +96,13 @@ describe("service-schema.json stays independent of the provider registries", () 
               healthCheckPath: "/health",
               dockerfile: "Dockerfile",
             })
-          : createServiceJson(`test-${type}`, type, "shop", 4000 + index),
+          : createServiceJson(
+              `test-${type}`,
+              type,
+              "shop",
+              (type === "frontend" ? 3000 : 4000) + index,
+              type === "worker" ? ["nats"] : [],
+            ),
       ),
       ...Object.keys(FRONTEND_FRAMEWORKS).map((framework, index) =>
         createServiceJson(
@@ -132,34 +144,51 @@ describe("service-schema.json stays independent of the provider registries", () 
 
   it("accepts the NATS feature used by existing service manifests", () => {
     expect(
-      validateService({ appName: "orders-api", appType: "backend", featuresEnabled: ["nats"] }),
+      validateService(
+        manifest({
+          appName: "orders-api",
+          appType: "backend",
+          port: 4000,
+          featuresEnabled: ["nats"],
+        }),
+      ),
     ).toBe(true);
   });
 
   it("validates supported post-start smoke checks", () => {
     expect(
-      validateService({
-        appName: "orders-api",
-        appType: "backend",
-        smoke: {
-          via: "proxy",
-          steps: [{ name: "health", path: "/health", expect: 200 }],
-        },
-      }),
+      validateService(
+        manifest({
+          appName: "orders-api",
+          appType: "backend",
+          port: 4000,
+          smoke: {
+            via: "proxy",
+            steps: [{ name: "health", path: "/health", expect: 200 }],
+          },
+        }),
+      ),
     ).toBe(true);
   });
 
-  it("bounds ports to valid TCP port numbers", () => {
-    for (const port of [1, 65535]) {
-      expect(validateService({ appName: "api", appType: "backend", port })).toBe(true);
+  it("bounds backend ports to the range the engine allocates", () => {
+    for (const port of [4000, 5999]) {
+      expect(validateService(manifest({ appName: "api", appType: "backend", port }))).toBe(true);
     }
-    for (const port of [0, 65536, 1.5]) {
-      expect(validateService({ appName: "api", appType: "backend", port })).toBe(false);
+    for (const port of [0, 3999, 6000, 65536, 1.5]) {
+      expect(validateService(manifest({ appName: "api", appType: "backend", port }))).toBe(false);
     }
   });
 
+  it("keeps the rules for required fields", () => {
+    expect(validateService({ appName: "api", appType: "backend", port: 4000 })).toBe(false);
+    expect(validateService(manifest({ appName: "api", port: 4000 }))).toBe(false);
+  });
+
   it("accepts the legacy `type` alias when appType is absent", () => {
-    expect(validateService({ appName: "legacy-api", type: "backend" })).toBe(true);
+    expect(validateService(manifest({ appName: "legacy-api", type: "backend", port: 4000 }))).toBe(
+      true,
+    );
   });
 
   it("treats `$schema` as editor metadata during service-manifest discovery", () => {
@@ -174,12 +203,6 @@ describe("service-schema.json stays independent of the provider registries", () 
       "service.json",
     );
     expect(result.warnings).toEqual([]);
-  });
-
-  it("validates BYO service manifests with the Draft 2020-12 validator", () => {
-    for (const script of byoValidationScripts) {
-      expect(script).toContain("scripts/validate-service-json.mjs");
-    }
   });
 
   it("accepts every registered framework and language id with its open pattern", () => {

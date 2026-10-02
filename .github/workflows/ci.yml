@@ -63,8 +63,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # The PR branch itself (not the merge commit), so fixes can be pushed to it.
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          # A same-repo PR checks out its own branch (not the merge commit), so fixes can be pushed to it.
+          # A fork's branch does not exist in this repository, so fork PRs use the default PR merge ref.
+          ref: ${{ (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref) || github.ref }}
           persist-credentials: true # zizmor: ignore[artipacked] needed to push the autofix commit
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile

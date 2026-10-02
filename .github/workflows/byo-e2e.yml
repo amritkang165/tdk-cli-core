@@ -6,7 +6,7 @@ on:
     paths:
       - "cli/src/commands/resource.ts"
       - "cli/src/commands/up.ts"
-      - "schemas/service.schema.json"
+      - "engine/schemas/service-schema.json"
       - "tests/e2e/fixtures/byo-python-health/**"
       - "tests/e2e/byo-python.test.sh"
       - ".github/workflows/byo-e2e.yml"
@@ -42,6 +42,9 @@ jobs:
           npm pack --pack-destination "$RUNNER_TEMP"
           npm install --global "$RUNNER_TEMP"/tdk-cli-internal-*.tgz
           tdk --version
+
+      - name: Install JSON Schema validator
+        run: npm install --global ajv-cli@5.0.0 # zizmor: ignore[adhoc-packages] pins the validator used by the contract test
 
       - name: Exercise BYO Python dry-run contract
         run: bash tests/e2e/byo-python.test.sh

@@ -9,7 +9,10 @@
           "appType": {
             "const": "backend"
           }
-        }
+        },
+        "required": [
+          "appType"
+        ]
       },
       "then": {
         "properties": {
@@ -29,7 +32,10 @@
           "appType": {
             "const": "frontend"
           }
-        }
+        },
+        "required": [
+          "appType"
+        ]
       },
       "then": {
         "properties": {
@@ -46,7 +52,10 @@
           "appType": {
             "const": "worker"
           }
-        }
+        },
+        "required": [
+          "appType"
+        ]
       },
       "then": {
         "properties": {
@@ -67,7 +76,10 @@
           "appType": {
             "const": "bring-your-own"
           }
-        }
+        },
+        "required": [
+          "appType"
+        ]
       },
       "then": {
         "properties": {
@@ -207,7 +219,7 @@
       "type": "object"
     },
     "featuresEnabled": {
-      "description": "Platform features:\n• nats - NATS JetStream eventing\n• prisma - DB ORM & migrations\n• redis - Caching layer\n• infisical - Secrets management\n• vitest - Test framework\n• traefik - Reverse proxy routing\n• websocket - WS support\n• graphql - GraphQL server\n• grpc - gRPC protocol",
+      "description": "Platform features:\n• nats - NATS JetStream eventing\n• prisma - DB ORM & migrations\n• redis - Caching layer\n• infisical - Secrets management\n• vitest - Test framework\n• traefik - Reverse proxy routing\n• websocket - WS support\n• graphql - GraphQL server\n• grpc - gRPC protocol\n• vite, tsconfig, dockerfile, nginx, ... - generator features that `tdk resource` writes into new files",
       "items": {
         "enum": [
           "nats",
@@ -218,7 +230,21 @@
           "traefik",
           "websocket",
           "graphql",
-          "grpc"
+          "grpc",
+          "api-client",
+          "env-config",
+          "api-index",
+          "vite",
+          "tsconfig",
+          "dockerfile",
+          "npmrc",
+          "bunfig",
+          "nginx",
+          "env",
+          "playwright",
+          "agents-md",
+          "ddd",
+          "sablier"
         ],
         "type": "string"
       },
@@ -227,13 +253,21 @@
     },
     "framework": {
       "description": "Framework provider id. For frontend resources it selects the Vite and TypeScript config (omitted means react, legacy manifests). For backend resources it selects the HTTP framework on the Bun runtime (omitted means hono; not used with a language that owns its runtime, such as python). Valid ids come from the CLI provider registries, which reject unknown ids before writing a resource.",
-      "examples": ["react", "vue", "solid"],
+      "examples": [
+        "react",
+        "vue",
+        "solid"
+      ],
       "pattern": "^[a-z][a-z0-9-]*$",
       "type": "string"
     },
     "language": {
       "description": "Backend language provider id used to scaffold and run the service. Only meaningful for backend resources; omitted means bun (legacy manifests). Valid ids come from the CLI provider registry.",
-      "examples": ["bun", "python", "go"],
+      "examples": [
+        "bun",
+        "python",
+        "go"
+      ],
       "pattern": "^[a-z][a-z0-9-]*$",
       "type": "string"
     },
@@ -370,11 +404,13 @@
             "additionalProperties": false,
             "properties": {
               "name": {
-                "type": "string"
+                "type": "string",
+                "description": "Optional display name for this check."
               },
               "method": {
                 "type": "string",
-                "default": "GET"
+                "default": "GET",
+                "description": "HTTP method. Defaults to GET."
               },
               "path": {
                 "type": "string",
@@ -388,10 +424,12 @@
                 "type": "integer",
                 "minimum": 100,
                 "maximum": 599,
-                "default": 200
+                "default": 200,
+                "description": "Expected HTTP status code, from 100 through 599."
               },
               "bodyContains": {
-                "type": "string"
+                "type": "string",
+                "description": "Optional text that must occur in the response body."
               },
               "save": {
                 "type": "object",
@@ -402,7 +440,8 @@
                 "description": "Saves response fields for later steps, for example {\"id\": \"$.id\"}."
               }
             }
-          }
+          },
+          "description": "Non-empty ordered list of HTTP checks to run after the resource starts."
         }
       }
     },
@@ -423,14 +462,47 @@
         }
       },
       "type": "object"
+    },
+    "type": {
+      "description": "Legacy alias for appType, still read from older service.json files. Use appType in new files.",
+      "enum": [
+        "backend",
+        "frontend",
+        "sdk",
+        "worker",
+        "migrator",
+        "library",
+        "mcp",
+        "bring-your-own"
+      ],
+      "type": "string"
+    },
+    "enabled": {
+      "description": "Whether this resource is enabled in its project configuration.",
+      "type": "boolean"
+    },
+    "apiPath": {
+      "description": "API path exposed by this resource, when applicable.",
+      "type": "string"
     }
   },
   "required": [
     "appName",
-    "appType",
     "stack",
     "schemaVersion"
   ],
   "title": "TDK Landscape Resource Configuration",
-  "type": "object"
+  "type": "object",
+  "anyOf": [
+    {
+      "required": [
+        "appType"
+      ]
+    },
+    {
+      "required": [
+        "type"
+      ]
+    }
+  ]
 }
