@@ -1,9 +1,9 @@
-// Offline check of engine/schemas/service-schema.json. It never fetches the live Pages copy:
+// Offline check of schemas/service.schema.json. It never fetches the live Pages copy:
 // that file is a deploy artifact published from main (see .github/workflows/publish-service-schema.yml),
 // so a PR that changes the schema could never match it before merge.
 import { readFile } from "node:fs/promises";
 
-const sourcePath = new URL("../engine/schemas/service-schema.json", import.meta.url);
+const sourcePath = new URL("../schemas/service.schema.json", import.meta.url);
 const schema = JSON.parse(await readFile(sourcePath, "utf8"));
 
 const problems = [];
@@ -20,7 +20,7 @@ for (const field of ["framework", "language"]) {
 }
 
 if (problems.length) {
-  console.error(`Invalid engine/schemas/service-schema.json:\n- ${problems.join("\n- ")}`);
+  console.error(`Invalid schemas/service.schema.json:\n- ${problems.join("\n- ")}`);
   process.exit(1);
 }
-console.log("engine/schemas/service-schema.json is valid and keeps provider ids open.");
+console.log("schemas/service.schema.json is valid and keeps provider ids open.");

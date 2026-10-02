@@ -474,14 +474,16 @@ describe("service.json schema", () => {
   it("keeps framework open to every registered frontend provider", () => {
     const schemaPath = join(
       dirname(fileURLToPath(import.meta.url)),
-      "../../../../engine/schemas/service-schema.json",
+      "../../../../schemas/service.schema.json",
     );
     const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
 
     // Unknown user fields are preserved and warned about rather than rejected.
     expect(schema.additionalProperties).toBe(true);
-    expect(schema.required).toContain("schemaVersion");
-    expect(schema.properties.schemaVersion).toMatchObject({ const: 1, type: "integer" });
+    expect(schema.required).toContain("appName");
+    expect(schema.anyOf).toContainEqual({ required: ["appType"] });
+    expect(schema.anyOf).toContainEqual({ required: ["type"] });
+    expect(schema.properties.schemaVersion.type).toBe("number");
     expect(schema.properties.appType.enum).toContain("bring-your-own");
     expect(schema.properties.stack.type).toBe("string");
     expect(schema.properties.stack.enum).toBeUndefined();

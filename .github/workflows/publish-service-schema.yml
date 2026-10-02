@@ -1,12 +1,12 @@
 name: Publish service schema
 
-# engine/schemas/service-schema.json is the source of truth. The copy at
+# schemas/service.schema.json is the source of truth. The copy at
 # https://tdk-landscape.github.io/schema.service.json is a deploy artifact for editors,
 # refreshed here after a change lands on main.
 on:
   push:
     branches: [main]
-    paths: [engine/schemas/service-schema.json]
+    paths: [schemas/service.schema.json]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
             exit 0
           fi
           git clone --depth 1 "https://x-access-token:${PAGES_SYNC_TOKEN}@github.com/tdk-landscape/tdk-landscape.github.io.git" pages
-          cp engine/schemas/service-schema.json pages/schema.service.json
+          cp schemas/service.schema.json pages/schema.service.json
           cd pages
           if git diff --quiet; then
             echo "Published schema is already up to date"
@@ -49,7 +49,7 @@ jobs:
           import json, os, time, urllib.request
 
           url = "https://tdk-landscape.github.io/schema.service.json"
-          main = json.load(open("engine/schemas/service-schema.json"))
+          main = json.load(open("schemas/service.schema.json"))
           has_token = bool(os.environ.get("PAGES_SYNC_TOKEN"))
           # Pages needs a minute or two to redeploy after a push; without a token nothing was pushed, so do not wait.
           deadline = time.time() + (240 if has_token else 0)

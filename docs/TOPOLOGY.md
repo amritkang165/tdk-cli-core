@@ -125,6 +125,6 @@ Generated files are useful for debugging the output, but the source templates, m
 - [Discovery orchestrator](../discovery/discovery_orchestrator.star)
 - [Engine generator index](../engine/topologies/tilt/generators/index.star)
 - [Manifest resource generator/orchestrator](../engine/topologies/tilt/resources/orchestrator/generators/manifest_resource.star)
-- [Manifest schema](../engine/schemas/service-schema.json)
+- [Manifest schema](../schemas/service.schema.json)
 - [Feature configuration reference](FEATURES.md)
 - [Contributor recipes](contributing/02-feature-recipes.md)

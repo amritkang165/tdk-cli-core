@@ -54,9 +54,6 @@ jobs:
           npm install --global "$RUNNER_TEMP"/tdk-cli-internal-*.tgz
           tdk --version
 
-      - name: Install JSON Schema validator
-        run: npm install --global ajv-cli@5.0.0 # zizmor: ignore[adhoc-packages] pins the validator used by the contract test
-
       - name: Boot BYO Python fixture
         run: bash tests/e2e/byo-python-boot.test.sh
 

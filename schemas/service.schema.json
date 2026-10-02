@@ -1,0 +1,226 @@
+{
+  "$id": "https://tdk-landscape.github.io/schema.service.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TDK service configuration",
+  "description": "Configuration for a TDK service in service.json. TDK uses these fields to discover and run services during local development.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "description": "URL of the JSON Schema used by editors to provide completion and validation.",
+      "type": "string"
+    },
+    "appName": {
+      "description": "Unique name of this service, typically matching its resource directory name.",
+      "type": "string"
+    },
+    "appType": {
+      "description": "TDK service type. Legacy service.json files may use the type property instead.",
+      "type": "string",
+      "enum": [
+        "backend",
+        "frontend",
+        "library",
+        "sdk",
+        "worker",
+        "migrator",
+        "mcp",
+        "bring-your-own"
+      ]
+    },
+    "type": {
+      "description": "Legacy alias for appType. Prefer appType in new service.json files.",
+      "type": "string",
+      "enum": [
+        "backend",
+        "frontend",
+        "library",
+        "sdk",
+        "worker",
+        "migrator",
+        "mcp",
+        "bring-your-own"
+      ]
+    },
+    "stack": {
+      "description": "Stack or group this service belongs to.",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "description": "Version of the TDK service manifest format.",
+      "type": "number"
+    },
+    "port": {
+      "description": "Host port used to access this service during local development.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "replicas": {
+      "description": "Number of local service instances to run.",
+      "type": "number"
+    },
+    "runtime": {
+      "description": "Runtime used to run this service.",
+      "type": "string"
+    },
+    "name": {
+      "description": "Legacy service name. Prefer appName in new service.json files.",
+      "type": "string"
+    },
+    "dependencies": {
+      "description": "Legacy build dependencies field. Prefer dependsOn for service startup dependencies.",
+      "type": "array",
+      "items": {
+        "description": "Name of a legacy build dependency.",
+        "type": "string"
+      }
+    },
+    "framework": {
+      "description": "Framework provider id selected by the CLI provider registry for this service.",
+      "examples": ["react", "vue", "solid"],
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "language": {
+      "description": "Backend language provider id selected by the CLI provider registry for this service.",
+      "examples": ["bun", "python", "go"],
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "build": {
+      "description": "Optional build configuration used when creating this service's container image.",
+      "type": "object"
+    },
+    "dev": {
+      "description": "Optional local development command and file-watch configuration.",
+      "type": "object"
+    },
+    "featuresEnabled": {
+      "description": "Known TDK resource features enabled for this service.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "api-client",
+          "env-config",
+          "api-index",
+          "prisma",
+          "vite",
+          "tsconfig",
+          "dockerfile",
+          "npmrc",
+          "bunfig",
+          "nginx",
+          "env",
+          "playwright",
+          "agents-md",
+          "ddd",
+          "sablier",
+          "nats"
+        ]
+      }
+    },
+    "dependsOn": {
+      "description": "Stack or service names that must start before this service.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enabled": {
+      "description": "Whether this service is enabled in its project configuration.",
+      "type": "boolean"
+    },
+    "basePath": {
+      "description": "URL path prefix used to route requests to this service.",
+      "type": "string"
+    },
+    "backendName": {
+      "description": "Name of the backend associated with this service, when applicable.",
+      "type": "string"
+    },
+    "apiPath": {
+      "description": "API path exposed by this service, when applicable.",
+      "type": "string"
+    },
+    "healthCheckPath": {
+      "description": "HTTP path probed to determine whether the service is healthy. Defaults to /health.",
+      "type": "string"
+    },
+    "traefik": {
+      "description": "Optional Traefik routing and load-balancer health-check overrides.",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Custom hostname used to route requests to this service.",
+          "type": "string"
+        },
+        "pathPrefix": {
+          "description": "URL path prefix used to route requests to this service.",
+          "type": "string"
+        },
+        "healthCheck": {
+          "description": "Path Traefik uses to probe this service's health.",
+          "type": "string"
+        }
+      }
+    },
+    "sablier": {
+      "description": "Optional on-demand scaling configuration for this service.",
+      "type": "object",
+      "properties": {
+        "enable": {
+          "description": "Whether on-demand scaling is enabled.",
+          "default": false,
+          "type": "boolean"
+        },
+        "group": {
+          "description": "Name of the group of services that scale together.",
+          "type": "string"
+        },
+        "sessionDuration": {
+          "description": "How long the service stays active after its last request.",
+          "type": "string"
+        },
+        "deferStart": {
+          "description": "Whether to defer starting this service until its first request. Requires enable to be true.",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "dockerfile": {
+      "description": "Optional Dockerfile path relative to the service directory.",
+      "type": "string"
+    },
+    "image": {
+      "description": "Optional Docker image name to use instead of building an image.",
+      "type": "string"
+    },
+    "exposeViaProxy": {
+      "description": "Whether a bring-your-own service should receive a Traefik route.",
+      "type": "boolean"
+    },
+    "restart": {
+      "description": "Docker Compose restart policy for this service.",
+      "type": "string",
+      "enum": ["no", "on-failure", "unless-stopped", "always"]
+    }
+  },
+  "required": [
+    "appName"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "appType"
+      ]
+    },
+    {
+      "required": [
+        "type"
+      ]
+    }
+  ]
+}
