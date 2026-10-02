@@ -114,6 +114,20 @@ export function createServiceJson(name, type, stack, port, extraFeatures = [], f
         ...(language ? { language: language.id } : {}),
     };
 }
+export function createByoServiceJson(name, stack, port, options) {
+    return {
+        $schema: SERVICE_MANIFEST_SCHEMA_URL,
+        schemaVersion: SERVICE_MANIFEST_SCHEMA_VERSION,
+        appName: name,
+        appType: "bring-your-own",
+        stack,
+        port,
+        healthCheckPath: options.healthCheckPath,
+        ...(options.image ? { image: options.image } : { dockerfile: options.dockerfile }),
+        ...(options.exposeViaProxy === false ? { exposeViaProxy: false } : {}),
+        ...(options.restart ? { restart: options.restart } : {}),
+    };
+}
 export function createPackageJson(name, type, frameworkId) {
     const isFrontend = type === "frontend";
     const framework = resolveFrontendFramework(type, frameworkId);
@@ -534,18 +548,13 @@ export const resourceCommand = new Command("resource")
             }
             mkdirSync(fullPath, { recursive: true });
             // Create service.json
-            const byoServiceJson = {
-                $schema: SERVICE_MANIFEST_SCHEMA_URL,
-                schemaVersion: SERVICE_MANIFEST_SCHEMA_VERSION,
-                appName: resourceName,
-                appType: "bring-your-own",
-                stack: stackName,
-                port,
+            const byoServiceJson = createByoServiceJson(resourceName, stackName, port, {
                 healthCheckPath: options.healthPath || "/health",
-                ...(options.image ? { image: options.image } : { dockerfile }),
+                dockerfile,
+                ...(options.image ? { image: options.image } : {}),
                 ...(options.proxy === false ? { exposeViaProxy: false } : {}),
                 ...(options.restart ? { restart: options.restart } : {}),
-            };
+            });
             const { writeFileSync } = await import("node:fs");
             writeFileSync(resolve(fullPath, "service.json"), JSON.stringify(byoServiceJson, null, 2));
             // Create Dockerfile stub if no image provided and dockerfile doesn't exist

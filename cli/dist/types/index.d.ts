@@ -7,10 +7,10 @@ export interface DiscoveredResource {
     port?: number;
     type?: ResourceType;
 }
-export interface ResourceConfig {
-    [key: string]: unknown;
+export declare const RESOURCE_CONFIG_APP_TYPES: readonly ["backend", "frontend", "library", "sdk", "worker", "migrator", "mcp", "bring-your-own"];
+export interface ResourceConfigFields {
     appName: string;
-    appType: "backend" | "frontend" | "library" | "sdk" | "worker" | "migrator" | "mcp" | "bring-your-own";
+    appType: (typeof RESOURCE_CONFIG_APP_TYPES)[number];
     stack?: string;
     schemaVersion?: number;
     port?: number;
@@ -44,6 +44,9 @@ export interface ResourceConfig {
     dockerfile?: string;
     /** Optional Docker image name instead of building from Dockerfile */
     image?: string;
+}
+export interface ResourceConfig extends ResourceConfigFields {
+    [key: string]: unknown;
 }
 export interface DiscoveredStack {
     name: string;

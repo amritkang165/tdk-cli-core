@@ -1,3 +1,13 @@
+export const RESOURCE_CONFIG_APP_TYPES = [
+    "backend",
+    "frontend",
+    "library",
+    "sdk",
+    "worker",
+    "migrator",
+    "mcp",
+    "bring-your-own",
+];
 export const CREATABLE_RESOURCE_TYPES = [
     "backend",
     "frontend",

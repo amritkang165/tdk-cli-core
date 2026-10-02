@@ -28,6 +28,35 @@ export declare function resolveByoPort(value: string | undefined, assignedPort: 
     };
 }>): number;
 export declare function createServiceJson(name: string, type: CreatableResourceType, stack: string, port: number, extraFeatures?: string[], frameworkId?: string, languageId?: string): any;
+export declare function createByoServiceJson(name: string, stack: string, port: number, options: {
+    healthCheckPath: string;
+    dockerfile: string;
+    image?: string;
+    exposeViaProxy?: boolean;
+    restart?: string;
+}): {
+    $schema: string;
+    schemaVersion: number;
+    appName: string;
+    appType: string;
+    stack: string;
+    port: number;
+    healthCheckPath: string;
+    image: string;
+    exposeViaProxy?: boolean | undefined;
+    restart?: string | undefined;
+} | {
+    $schema: string;
+    schemaVersion: number;
+    appName: string;
+    appType: string;
+    stack: string;
+    port: number;
+    healthCheckPath: string;
+    dockerfile: string;
+    exposeViaProxy?: boolean | undefined;
+    restart?: string | undefined;
+};
 export declare function createPackageJson(name: string, type: string, frameworkId?: string): {
     name: string;
     version: string;
